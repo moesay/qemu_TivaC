@@ -44,4 +44,4 @@ Now, QEMU_TivaC is ready to be attached to gdb. In a different terminal run arm 
    arm-none-eabi-gdb <your elf file path>
    (gdb) target remote :1234
 
-For the original QEMU readme, go to `<https://github.com/qemu/qemu>`
+For the original QEMU readme, go to `<https://github.com/qemu/qemu>`_
