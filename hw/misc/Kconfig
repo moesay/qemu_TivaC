@@ -180,4 +180,7 @@ config AXP209_PMU
     bool
     depends on I2C
 
+config TM4C123_SYSCTL
+    bool
+
 source macio/Kconfig

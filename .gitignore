@@ -10,6 +10,7 @@
 .gdb_history
 cscope.*
 tags
+compile_commands.json
 TAGS
 GPATH
 GRTAGS
