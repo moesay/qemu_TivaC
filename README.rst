@@ -40,7 +40,8 @@ After building QEMU_TivaC, you can use it with gdb through the provided gdbstub.
 Now, QEMU_TivaC is ready to be attached to gdb. In a different terminal run arm gdb and attach QEMU_TivaC to it.
 
 .. code-block:: shell
+
    arm-none-eabi-gdb <your elf file path>
    (gdb) target remote :1234
 
-For the original QEMU readme, go to `<https://github.com/qemu/qemu>`_.
+For the original QEMU readme, go to `<https://github.com/qemu/qemu>`_T
