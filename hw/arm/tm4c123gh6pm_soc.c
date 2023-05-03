@@ -130,6 +130,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     for(i = 0; i < USART_COUNT; i++) {
         dev = DEVICE(&(s->usart[i]));
+        s->usart[i].sysctl = &s->sysctl;
         qdev_prop_set_chr(dev, "chardev", serial_hd(i));
         if(!sysbus_realize(SYS_BUS_DEVICE(&s->usart[i]), errp)) {
             return;
@@ -141,6 +142,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     for(i = 0; i < GPIO_COUNT; i++) {
         dev = DEVICE(&(s->gpio[i]));
+        s->gpio[i].sysctl = &s->sysctl;
         if(!sysbus_realize(SYS_BUS_DEVICE(&s->gpio[i]), errp)) {
             return;
         }
@@ -156,6 +158,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     busdev = SYS_BUS_DEVICE(dev);
     sysbus_mmio_map(busdev, 0, SYSCTL_ADDR);
+
 
     create_unimplemented_device("watchdog[*]", 0x40000000, 0x1FFF);
 

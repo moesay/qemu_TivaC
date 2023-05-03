@@ -49,7 +49,6 @@ OBJECT_DECLARE_SIMPLE_TYPE(TM4C123GH6PMState, TM4C123GH6PM_SOC)
 
 #define GPIO_COUNT 6
 
-//the device representation
 struct TM4C123GH6PMState {
     SysBusDevice parent_obj;
 

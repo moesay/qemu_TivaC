@@ -27,6 +27,7 @@
 
 #include "qom/object.h"
 #include "hw/sysbus.h"
+#include "hw/hw.h"
 
 #define SYSCTL_DID0 0x000
 #define SYSCTL_DID1 0x004

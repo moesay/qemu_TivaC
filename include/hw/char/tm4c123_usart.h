@@ -28,6 +28,7 @@
 #include "hw/sysbus.h"
 #include "qom/object.h"
 #include "chardev/char-fe.h"
+#include "hw/misc/tm4c123_sysctl.h"
 
 #define USART_DR            0x000
 #define USART_RSR           0x004
@@ -66,7 +67,16 @@
 #define USART_CR_EN   (1 << 0)
 #define USART_IM_RXIM (1 << 4)
 
+#define USART_0 0x4000C000
+#define USART_1 0x4000D000
+#define USART_2 0x4000E000
+#define USART_3 0x4000F000
+#define USART_4 0x40010000
+#define USART_5 0x40011000
+#define USART_6 0x40012000
+#define USART_7 0x40013000
 #define TYPE_TM4C123_USART "tm4c123-usart"
+
 OBJECT_DECLARE_SIMPLE_TYPE(TM4C123USARTState, TM4C123_USART)
 
 struct TM4C123USARTState {
@@ -106,6 +116,7 @@ struct TM4C123USARTState {
 
     CharBackend chr;
     qemu_irq irq;
+    TM4C123SysCtlState *sysctl;
 };
 
 #endif

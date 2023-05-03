@@ -27,6 +27,7 @@
 
 #include "hw/sysbus.h"
 #include "qom/object.h"
+#include "hw/misc/tm4c123_sysctl.h"
 
 /* #define GPIO_DATA 0x00 */
 #define GPIO_DATA 0x3FC
@@ -65,6 +66,13 @@
 #define GPIO_PCELL_ID1 0xFF4
 #define GPIO_PCELL_ID2 0xFF8
 #define GPIO_PCELL_ID3 0xFFC
+
+#define GPIO_A 0x40004000
+#define GPIO_B 0x40005000
+#define GPIO_C 0x40006000
+#define GPIO_D 0x40007000
+#define GPIO_E 0x40024000
+#define GPIO_F 0x40025000
 
 #define TYPE_TM4C123_GPIO "tm4c123-gpio"
 
@@ -113,6 +121,7 @@ struct TM4C123GPIOState {
 
     Clock* clock;
     qemu_irq irq;
+    TM4C123SysCtlState *sysctl;
 };
 
 #endif

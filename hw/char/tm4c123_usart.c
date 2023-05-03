@@ -30,17 +30,39 @@
 #include "qemu/log.h"
 #include "qemu/module.h"
 
-#ifndef TM4C123_USART_ERR_DEBUG
-#define TM4C123_USART_ERR_DEBUG 3
-#endif
+#define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 
-#define DB_PRINT_L(lvl, fmt, args...) do { \
-    if (TM4C123_USART_ERR_DEBUG >= lvl) { \
-        qemu_log("%s: " fmt, __func__, ## args); \
-    } \
-} while (0)
+static bool usart_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
+    qemu_log("checking 0x%"HWADDR_PRIx"\n", addr);
+    switch(addr) {
+        case USART_0:
+            return (s->sysctl_rcgcuart & (1 << 0));
+            break;
+        case USART_1:
+            return (s->sysctl_rcgcuart & (1 << 1));
+            break;
+        case USART_2:
+            return (s->sysctl_rcgcuart & (1 << 2));
+            break;
+        case USART_3:
+            return (s->sysctl_rcgcuart & (1 << 3));
+            break;
+        case USART_4:
+            return (s->sysctl_rcgcuart & (1 << 4));
+            break;
+        case USART_5:
+            return (s->sysctl_rcgcuart & (1 << 5));
+            break;
+        case USART_6:
+            return (s->sysctl_rcgcuart & (1 << 6));
+            break;
+        case USART_7:
+            return (s->sysctl_rcgcuart & (1 << 7));
+            break;
+    }
+    return false;
+}
 
-#define DB_PRINT(fmt, args...) DB_PRINT_L(1, fmt, ## args)
 
 static int tm4c123_usart_can_receive(void* opaque)
 {
@@ -59,7 +81,7 @@ static void tm4c123_usart_receive(void *opaque, const uint8_t *buf, int size)
 
     if(!(s->usart_ctl & USART_CR_EN && s->usart_ctl & USART_CR_RXE)) {
         //the module is not enabled
-        DB_PRINT("The module is not enbled\n");
+        LOG("The module is not enbled\n");
         return;
     }
 
@@ -70,7 +92,7 @@ static void tm4c123_usart_receive(void *opaque, const uint8_t *buf, int size)
         qemu_set_irq(s->irq, 1);
     }
 
-    DB_PRINT("Receiving: %c\n", s->usart_dr);
+    LOG("Receiving: %c\n", s->usart_dr);
 }
 
 static void tm4c123_usart_reset(DeviceState *dev)
@@ -114,7 +136,12 @@ static void tm4c123_usart_reset(DeviceState *dev)
 static uint64_t tm4c123_usart_read(void *opaque, hwaddr addr, unsigned int size)
 {
     TM4C123USARTState *s = opaque;
-    DB_PRINT("Reading from: 0x%"HWADDR_PRIx"\n", addr);
+    LOG("Attempt to read from 0x%"HWADDR_PRIx"\n", addr);
+
+    if(!usart_clock_enabled(s->sysctl, s->mmio.addr)) {
+        hw_error("USART module clock is not enabled");
+    }
+
     switch(addr) {
         case USART_DR:
             return s->usart_dr;
@@ -189,6 +216,13 @@ static void tm4c123_usart_write(void *opaque, hwaddr addr, uint64_t val64, unsig
 {
     TM4C123USARTState *s = opaque;
     uint32_t val32 = val64;
+
+    LOG("Attempt to write 0x%x to 0x%"HWADDR_PRIx"\n", val32, addr);
+
+    if(!usart_clock_enabled(s->sysctl, s->mmio.addr)) {
+        hw_error("USART module clock is not enabled");
+    }
+
     switch(addr) {
         case USART_DR:
             s->usart_dr = val32;

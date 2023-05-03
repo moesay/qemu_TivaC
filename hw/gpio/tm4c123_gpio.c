@@ -26,9 +26,35 @@
 #include "hw/gpio/tm4c123_gpio.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
+#include "hw/misc/tm4c123_sysctl.h"
 
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 #define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
+
+static bool gpio_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
+    qemu_log("checking 0x%"HWADDR_PRIx"\n", addr);
+    switch(addr) {
+        case GPIO_A:
+            return (s->sysctl_rcgcgpio & (1 << 0));
+            break;
+        case GPIO_B:
+            return (s->sysctl_rcgcgpio & (1 << 1));
+            break;
+        case GPIO_C:
+            return (s->sysctl_rcgcgpio & (1 << 2));
+            break;
+        case GPIO_D:
+            return (s->sysctl_rcgcgpio & (1 << 3));
+            break;
+        case GPIO_E:
+            return (s->sysctl_rcgcgpio & (1 << 4));
+            break;
+        case GPIO_F:
+            return (s->sysctl_rcgcgpio & (1 << 5));
+            break;
+    }
+    return false;
+}
 
 static void tm4c123_gpio_reset(DeviceState *dev)
 {
@@ -77,7 +103,11 @@ static void tm4c123_gpio_write(void *opaque, hwaddr addr, uint64_t val64, unsign
     TM4C123GPIOState *s = opaque;
     uint32_t val32 = val64;
 
+    if(!gpio_clock_enabled(s->sysctl, s->mmio.addr)) {
+        hw_error("GPIO module clock is not enabled");
+    }
     LOG("Attempt to write 0x%x to 0x%"HWADDR_PRIx"\n", val32, addr);
+
     switch(addr) {
         case GPIO_DATA:
             s->gpio_data = val32;
@@ -197,6 +227,10 @@ static uint64_t tm4c123_gpio_read(void *opaque, hwaddr addr, unsigned int size)
     TM4C123GPIOState *s = opaque;
 
     LOG("Attempt to read from 0x%"HWADDR_PRIx"\n", addr);
+
+    if(!gpio_clock_enabled(s->sysctl, s->mmio.addr)) {
+        hw_error("GPIO module clock is not enabled");
+    }
 
     switch(addr) {
         case GPIO_DATA:
