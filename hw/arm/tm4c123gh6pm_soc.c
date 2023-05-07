@@ -116,7 +116,8 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     /* Init ARMv7m */
     armv7m = DEVICE(&s->armv7m);
-    qdev_prop_set_uint32(armv7m, "num-irq", 138);
+    //the number of the sys exceptions + irqs. 0 is not used.
+    qdev_prop_set_uint32(armv7m, "num-irq", 154);
     qdev_prop_set_string(armv7m, "cpu-type", s->cpu_type);
     qdev_prop_set_bit(armv7m, "enable-bitband", true);
     qdev_connect_clock_in(armv7m, "cpuclk", s->sysclk);
@@ -127,6 +128,11 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
     if(!sysbus_realize(SYS_BUS_DEVICE(&s->armv7m), errp)) {
         return;
     }
+
+    /*
+     * Init GPIO lines
+     */
+
 
     for(i = 0; i < USART_COUNT; i++) {
         dev = DEVICE(&(s->usart[i]));

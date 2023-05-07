@@ -27,30 +27,32 @@
 #include "qemu/log.h"
 #include "qemu/module.h"
 #include "hw/misc/tm4c123_sysctl.h"
+#include "qemu/bitops.h"
 
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 #define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
+
 
 static bool gpio_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
     qemu_log("checking 0x%"HWADDR_PRIx"\n", addr);
     switch(addr) {
         case GPIO_A:
-            return (s->sysctl_rcgcgpio & (1 << 0));
+            return test_bit(0, (const unsigned long*)&s->sysctl_rcgcgpio);
             break;
         case GPIO_B:
-            return (s->sysctl_rcgcgpio & (1 << 1));
+            return test_bit(1, (const unsigned long*)&s->sysctl_rcgcgpio);
             break;
         case GPIO_C:
-            return (s->sysctl_rcgcgpio & (1 << 2));
+            return test_bit(2, (const unsigned long*)&s->sysctl_rcgcgpio);
             break;
         case GPIO_D:
-            return (s->sysctl_rcgcgpio & (1 << 3));
+            return test_bit(3, (const unsigned long*)&s->sysctl_rcgcgpio);
             break;
         case GPIO_E:
-            return (s->sysctl_rcgcgpio & (1 << 4));
+            return test_bit(4, (const unsigned long*)&s->sysctl_rcgcgpio);
             break;
         case GPIO_F:
-            return (s->sysctl_rcgcgpio & (1 << 5));
+            return test_bit(5, (const unsigned long*)&s->sysctl_rcgcgpio);
             break;
     }
     return false;
@@ -110,7 +112,27 @@ static void tm4c123_gpio_write(void *opaque, hwaddr addr, uint64_t val64, unsign
 
     switch(addr) {
         case GPIO_DATA:
-            s->gpio_data = val32;
+            {
+                uint32_t rising_edge = (val32 ^ s->gpio_data) & val32;
+                //level detection
+                s->gpio_mis = s->gpio_is & s->gpio_iev & val32;
+                s->gpio_mis |= s->gpio_is & ~(s->gpio_iev | val32);
+                s->gpio_mis &= s->gpio_im;
+
+                //edge detection
+                //both edges
+                s->gpio_mis |= (s->gpio_is | s->gpio_ibe) & (~s->gpio_is);
+                //rising edge
+                s->gpio_mis |= (~(s->gpio_is | s->gpio_ibe | s->gpio_iev)) & rising_edge;
+                //falling edge
+                s->gpio_mis |= ~(s->gpio_is | s->gpio_ibe | s->gpio_iev | rising_edge);
+                s->gpio_mis &= s->gpio_im;
+                s->gpio_ris |= s->gpio_mis & val32;
+
+                s->gpio_data = val32;
+                if(s->gpio_im != 0)
+                    qemu_irq_pulse(s->irq);
+            }
             break;
         case GPIO_DIR:
             s->gpio_dir = val32;
@@ -131,9 +153,11 @@ static void tm4c123_gpio_write(void *opaque, hwaddr addr, uint64_t val64, unsign
             s->gpio_ris = val32;
             break;
         case GPIO_MIS:
-            s->gpio_mis = val32;
+            READONLY;
             break;
         case GPIO_ICR:
+            s->gpio_mis ^= val32;
+            s->gpio_ris ^= val32;
             s->gpio_icr = val32;
             break;
         case GPIO_AFSEL:

@@ -40,7 +40,6 @@ static void tivac_init(MachineState *machine)
     DeviceState *dev;
     Clock *sysclk;
 
-    /* This clock doesn't need migration because it is fixed-frequency */
     sysclk = clock_new(OBJECT(machine), "SYSCLK");
     clock_set_hz(sysclk, SYSCLK_FRQ);
 

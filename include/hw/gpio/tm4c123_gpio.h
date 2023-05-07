@@ -26,6 +26,7 @@
 #define HW_ARM_TM4C123_GPIO_H
 
 #include "hw/sysbus.h"
+#include "hw/irq.h"
 #include "qom/object.h"
 #include "hw/misc/tm4c123_sysctl.h"
 
@@ -119,7 +120,6 @@ struct TM4C123GPIOState {
     uint32_t gpio_pcell_id2;
     uint32_t gpio_pcell_id3;
 
-    Clock* clock;
     qemu_irq irq;
     TM4C123SysCtlState *sysctl;
 };
