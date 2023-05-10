@@ -28,13 +28,12 @@
 #include "qemu/module.h"
 #include "hw/misc/tm4c123_sysctl.h"
 #include "qemu/bitops.h"
+#include "trace.h"
 
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 #define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
 
-
 static bool gpio_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
-    qemu_log("checking 0x%"HWADDR_PRIx"\n", addr);
     switch(addr) {
         case GPIO_A:
             return test_bit(0, (const unsigned long*)&s->sysctl_rcgcgpio);
@@ -108,7 +107,7 @@ static void tm4c123_gpio_write(void *opaque, hwaddr addr, uint64_t val64, unsign
     if(!gpio_clock_enabled(s->sysctl, s->mmio.addr)) {
         hw_error("GPIO module clock is not enabled");
     }
-    LOG("Attempt to write 0x%x to 0x%"HWADDR_PRIx"\n", val32, addr);
+    trace_tm4c123_gpio_write(addr, val32);
 
     switch(addr) {
         case GPIO_DATA:
@@ -206,40 +205,40 @@ static void tm4c123_gpio_write(void *opaque, hwaddr addr, uint64_t val64, unsign
             s->gpio_dmactl = val32;
             break;
         case GPIO_PER_ID4:
-            s->gpio_per_id4 = val32;
+            READONLY;
             break;
         case GPIO_PER_ID5:
-            s->gpio_per_id5 = val32;
+            READONLY;
             break;
         case GPIO_PER_ID6:
-            s->gpio_per_id6 = val32;
+            READONLY;
             break;
         case GPIO_PER_ID7:
-            s->gpio_per_id7 = val32;
+            READONLY;
             break;
         case GPIO_PER_ID0:
-            s->gpio_per_id0 = val32;
+            READONLY;
             break;
         case GPIO_PER_ID1:
-            s->gpio_per_id1 = val32;
+            READONLY;
             break;
         case GPIO_PER_ID2:
-            s->gpio_per_id2 = val32;
+            READONLY;
             break;
         case GPIO_PER_ID3:
-            s->gpio_per_id3 = val32;
+            READONLY;
             break;
         case GPIO_PCELL_ID0:
-            s->gpio_pcell_id0 = val32;
+            READONLY;
             break;
         case GPIO_PCELL_ID1:
-            s->gpio_pcell_id1 = val32;
+            READONLY;
             break;
         case GPIO_PCELL_ID2:
-            s->gpio_pcell_id2 = val32;
+            READONLY;
             break;
         case GPIO_PCELL_ID3:
-            s->gpio_pcell_id3 = val32;
+            READONLY;
             break;
         default:
             LOG("Bad address 0x%"HWADDR_PRIx"\n", addr);
@@ -250,7 +249,7 @@ static uint64_t tm4c123_gpio_read(void *opaque, hwaddr addr, unsigned int size)
 {
     TM4C123GPIOState *s = opaque;
 
-    LOG("Attempt to read from 0x%"HWADDR_PRIx"\n", addr);
+    trace_tm4c123_gpio_read(addr);
 
     if(!gpio_clock_enabled(s->sysctl, s->mmio.addr)) {
         hw_error("GPIO module clock is not enabled");
