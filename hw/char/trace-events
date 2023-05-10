@@ -1,5 +1,9 @@
 # See docs/devel/tracing.rst for syntax documentation.
 
+# tm4c123_usart.c
+tm4c123_usart_read(uint64_t offset) " offset: 0x%" PRIu64
+tm4c123_usart_write(uint64_t offset, uint64_t value) " offset: 0x%" PRIu64 " - value: 0x%" PRIu64
+
 # parallel.c
 parallel_ioport_read(const char *desc, uint16_t addr, uint8_t value) "read [%s] addr 0x%02x val 0x%02x"
 parallel_ioport_write(const char *desc, uint16_t addr, uint8_t value) "write [%s] addr 0x%02x val 0x%02x"

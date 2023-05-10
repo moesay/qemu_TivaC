@@ -29,11 +29,12 @@
 #include "hw/qdev-properties-system.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
+#include "trace.h"
 
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
+#define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
 
 static bool usart_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
-    qemu_log("checking 0x%"HWADDR_PRIx"\n", addr);
     switch(addr) {
         case USART_0:
             return (s->sysctl_rcgcuart & (1 << 0));
@@ -136,11 +137,12 @@ static void tm4c123_usart_reset(DeviceState *dev)
 static uint64_t tm4c123_usart_read(void *opaque, hwaddr addr, unsigned int size)
 {
     TM4C123USARTState *s = opaque;
-    LOG("Attempt to read from 0x%"HWADDR_PRIx"\n", addr);
 
     if(!usart_clock_enabled(s->sysctl, s->mmio.addr)) {
         hw_error("USART module clock is not enabled");
     }
+
+    trace_tm4c123_usart_read(addr);
 
     switch(addr) {
         case USART_DR:
@@ -216,25 +218,27 @@ static void tm4c123_usart_write(void *opaque, hwaddr addr, uint64_t val64, unsig
 {
     TM4C123USARTState *s = opaque;
     uint32_t val32 = val64;
-
-    LOG("Attempt to write 0x%x to 0x%"HWADDR_PRIx"\n", val32, addr);
+    unsigned char ch;
 
     if(!usart_clock_enabled(s->sysctl, s->mmio.addr)) {
         hw_error("USART module clock is not enabled");
     }
 
+    trace_tm4c123_usart_write(addr, val32);
+
     switch(addr) {
         case USART_DR:
             s->usart_dr = val32;
-            /*
-             * reset the flag register.
-             */
+            if(val32 < 0xF000) {
+                ch = val32;
+                qemu_chr_fe_write_all(&s->chr, &ch, 1);
+            }
             break;
         case USART_RSR:
             s->usart_rsr = val32;
             break;
         case USART_FR:
-            s->usart_fr = val32;
+            READONLY;
             break;
         case USART_ILPR:
             s->usart_ilpr = val32;
@@ -258,10 +262,10 @@ static void tm4c123_usart_write(void *opaque, hwaddr addr, uint64_t val64, unsig
             s->usart_im = val32;
             break;
         case USART_RIS:
-            s->usart_ris = val32;
+            READONLY;
             break;
         case USART_MIS:
-            s->usart_mis = val32;
+            READONLY;
             break;
         case USART_ICR:
             s->usart_icr = val32;
@@ -276,46 +280,46 @@ static void tm4c123_usart_write(void *opaque, hwaddr addr, uint64_t val64, unsig
             s->usart_9bit_mask = val32;
             break;
         case USART_PP:
-            s->usart_pp = val32;
+            READONLY;
             break;
         case USART_CC:
             s->usart_cc = val32;
             break;
         case USART_PER_ID4:
-            s->usart_per_id4 = val32;
+            READONLY;
             break;
         case USART_PER_ID5:
-            s->usart_per_id5 = val32;
+            READONLY;
             break;
         case USART_PER_ID6:
-            s->usart_per_id6 = val32;
+            READONLY;
             break;
         case USART_PER_ID7:
-            s->usart_per_id7 = val32;
+            READONLY;
             break;
         case USART_PER_ID0:
-            s->usart_per_id0 = val32;
+            READONLY;
             break;
         case USART_PER_ID1:
-            s->usart_per_id1 = val32;
+            READONLY;
             break;
         case USART_PER_ID2:
-            s->usart_per_id2 = val32;
+            READONLY;
             break;
         case USART_PER_ID3:
-            s->usart_per_id3 = val32;
+            READONLY;
             break;
         case USART_PCELL_ID0:
-            s->usart_pcell_id0 = val32;
+            READONLY;
             break;
         case USART_PCELL_ID1:
-            s->usart_pcell_id1 = val32;
+            READONLY;
             break;
         case USART_PCELL_ID2:
-            s->usart_pcell_id2 = val32;
+            READONLY;
             break;
         case USART_PCELL_ID3:
-            s->usart_pcell_id3 = val32;
+            READONLY;
             break;
         default:
         qemu_log_mask(LOG_GUEST_ERROR,

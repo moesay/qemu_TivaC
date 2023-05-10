@@ -26,6 +26,7 @@
 #include "hw/misc/tm4c123_sysctl.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
+#include "trace.h"
 
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 #define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
@@ -162,7 +163,7 @@ static void tm4c123_sysctl_write(void *opaque, hwaddr addr, uint64_t val64, unsi
     TM4C123SysCtlState *s = opaque;
     uint32_t val32 = val64;
 
-    LOG("Attempt to write 0x%x to 0x%"HWADDR_PRIx"\n", val32, addr);
+    trace_tm4c123_sysctl_write(addr, val32);
 
     switch(addr) {
         case SYSCTL_DID0:
@@ -360,49 +361,59 @@ static void tm4c123_sysctl_write(void *opaque, hwaddr addr, uint64_t val64, unsi
             break;
         case SYSCTL_RCGCGPIO:
             s->sysctl_rcgcgpio = val32;
-            /*
-             * Mark the gpio as ready.
-             */
             s->sysctl_prgpio = val32;
             break;
         case SYSCTL_RCGCDMA:
             s->sysctl_rcgcdma = val32;
+            s->sysctl_prdma = val32;
             break;
         case SYSCTL_RCGCHIB:
             s->sysctl_rcgchib = val32;
+            s->sysctl_prhib = val32;
             break;
         case SYSCTL_RCGCUART:
             s->sysctl_rcgcuart = val32;
+            s->sysctl_pruart = val32;
             break;
         case SYSCTL_RCGCSSI:
             s->sysctl_rcgcssi = val32;
+            s->sysctl_prssi = val32;
             break;
         case SYSCTL_RCGCI2C:
             s->sysctl_rcgci2c = val32;
+            s->sysctl_pri2c = val32;
             break;
         case SYSCTL_RCGCUSB:
             s->sysctl_rcgcusb = val32;
+            s->sysctl_prusb = val32;
             break;
         case SYSCTL_RCGCCAN:
             s->sysctl_rcgccan = val32;
+            s->sysctl_prcan = val32;
             break;
         case SYSCTL_RCGCADC:
             s->sysctl_rcgcadc = val32;
+            s->sysctl_pradc = val32;
             break;
         case SYSCTL_RCGCACMP:
             s->sysctl_rcgcacmp = val32;
+            s->sysctl_pracmp = val32;
             break;
         case SYSCTL_RCGCPWM:
             s->sysctl_rcgcpwm = val32;
+            s->sysctl_prpwm = val32;
             break;
         case SYSCTL_RCGCQEI:
             s->sysctl_rcgcqei = val32;
+            s->sysctl_prqei = val32;
             break;
         case SYSCTL_RCGCEEPROM:
             s->sysctl_rcgceeprom = val32;
+            s->sysctl_preeprom = val32;
             break;
         case SYSCTL_RCGCWTIMER:
             s->sysctl_rcgcwtimer = val32;
+            s->sysctl_prwtimer = val32;
             break;
         case SYSCTL_SCGCWD:
             s->sysctl_scgcwd = val32;
@@ -558,7 +569,7 @@ static uint64_t tm4c123_sysctl_read(void *opaque, hwaddr addr, unsigned int size
 {
     TM4C123SysCtlState *s = opaque;
 
-    LOG("Attempt to read from 0x%"HWADDR_PRIx"\n" ,addr);
+    trace_tm4c123_sysctl_read(addr);
 
     switch(addr) {
         case SYSCTL_DID0:

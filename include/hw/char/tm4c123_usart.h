@@ -62,7 +62,9 @@
 #define USART_PCELL_ID3     0xFFC
 
 #define USART_FR_RXFF (1 << 6)
+#define USART_FR_TXFF (1 << 5)
 #define USART_FR_RXFE (1 << 4)
+#define USART_FR_BUSY (1 << 3)
 #define USART_CR_RXE  (1 << 9)
 #define USART_CR_EN   (1 << 0)
 #define USART_IM_RXIM (1 << 4)
