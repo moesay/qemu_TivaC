@@ -34,7 +34,8 @@
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 #define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
 
-static bool usart_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
+static bool usart_clock_enabled(TM4C123SysCtlState *s, hwaddr addr)
+{
     switch(addr) {
         case USART_0:
             return (s->sysctl_rcgcuart & (1 << 0));
@@ -206,9 +207,9 @@ static uint64_t tm4c123_usart_read(void *opaque, hwaddr addr, unsigned int size)
         case USART_PCELL_ID3:
             return s->usart_pcell_id3;
         default:
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "%s: Bad offset 0x%"HWADDR_PRIx"\n", __func__, addr);
-        return 0;
+            qemu_log_mask(LOG_GUEST_ERROR,
+                    "%s: Bad offset 0x%"HWADDR_PRIx"\n", __func__, addr);
+            return 0;
     }
 
     return 0;
@@ -322,9 +323,9 @@ static void tm4c123_usart_write(void *opaque, hwaddr addr, uint64_t val64, unsig
             READONLY;
             break;
         default:
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "%s: Bad offset 0x%"HWADDR_PRIx"\n", __func__, addr);
-        return;
+            qemu_log_mask(LOG_GUEST_ERROR,
+                    "%s: Bad offset 0x%"HWADDR_PRIx"\n", __func__, addr);
+            return;
     }
 
     return;
@@ -348,7 +349,7 @@ static void tm4c123_usart_init(Object *obj)
     sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->irq);
 
     memory_region_init_io(&s->mmio, obj, &tm4c123_usart_ops, s,
-                          TYPE_TM4C123_USART, 0xFFF);
+            TYPE_TM4C123_USART, 0xFFF);
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
 }
 
@@ -357,8 +358,8 @@ static void tm4c123_usart_realize(DeviceState *dev, Error **errp)
     TM4C123USARTState *s = TM4C123_USART(dev);
 
     qemu_chr_fe_set_handlers(&s->chr, tm4c123_usart_can_receive,
-                             tm4c123_usart_receive, NULL, NULL,
-                             s, NULL, true);
+            tm4c123_usart_receive, NULL, NULL,
+            s, NULL, true);
 }
 
 static void tm4c123_usart_class_init(ObjectClass *klass, void *data)

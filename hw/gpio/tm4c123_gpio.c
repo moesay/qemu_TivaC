@@ -33,7 +33,8 @@
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 #define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
 
-static bool gpio_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
+static bool gpio_clock_enabled(TM4C123SysCtlState *s, hwaddr addr)
+{
     switch(addr) {
         case GPIO_A:
             return test_bit(0, (const unsigned long*)&s->sysctl_rcgcgpio);
@@ -340,7 +341,8 @@ static const MemoryRegionOps tm4c123_gpio_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-static void tm4c123_gpio_init(Object *obj) {
+static void tm4c123_gpio_init(Object *obj)
+{
     TM4C123GPIOState *s = TM4C123_GPIO(obj);
 
     sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->irq);

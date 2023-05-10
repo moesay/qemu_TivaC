@@ -827,7 +827,8 @@ static const MemoryRegionOps tm4c123_sysctl_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-static void tm4c123_sysctl_init(Object *obj) {
+static void tm4c123_sysctl_init(Object *obj)
+{
     TM4C123SysCtlState *s = TM4C123_SYSCTL(obj);
 
     memory_region_init_io(&s->mmio, obj, &tm4c123_sysctl_ops, s, TYPE_TM4C123_SYSCTL, 0xFFF);

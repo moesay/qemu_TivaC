@@ -41,7 +41,7 @@ static bool locked = false;
 static void tm4c123_wdt_expired(void *opaque)
 {
     TM4C123WatchdogState *s = opaque;
-    //if this is the first timeout/the ris is not cleared
+    /*if this is the first timeout/the ris is not cleared */
     if(!test_bit(0, (const unsigned long*)&s->wdt_mis)) {
         set_bit(0, (unsigned long*)&s->wdt_mis);
         nmi_monitor_handle(0, NULL);
@@ -57,7 +57,8 @@ static void tm4c123_wdt_expired(void *opaque)
     }
 }
 
-static bool wdt_clock_enabled(TM4C123SysCtlState *s, hwaddr addr) {
+static bool wdt_clock_enabled(TM4C123SysCtlState *s, hwaddr addr)
+{
     switch(addr) {
         case WDT_0:
             return (s->sysctl_rcgcwd & (1 << 0));
@@ -95,7 +96,8 @@ static void tm4c123_wdt_reset(DeviceState *dev)
     s->wdt_pcell_id3 = 0x000000B1;
 }
 
-static uint64_t tm4c123_wdt_read(void *opaque, hwaddr addr, unsigned int size) {
+static uint64_t tm4c123_wdt_read(void *opaque, hwaddr addr, unsigned int size)
+{
     TM4C123WatchdogState *s = opaque;
 
     if(!wdt_clock_enabled(s->sysctl, s->mmio.addr)) {
@@ -150,7 +152,8 @@ static uint64_t tm4c123_wdt_read(void *opaque, hwaddr addr, unsigned int size) {
     return 0;
 }
 
-static void tm4c123_wdt_write(void *opaque, hwaddr addr, uint64_t val64, unsigned int size) {
+static void tm4c123_wdt_write(void *opaque, hwaddr addr, uint64_t val64, unsigned int size)
+{
     TM4C123WatchdogState *s = opaque;
     uint32_t val32 = val64;
 
@@ -251,7 +254,8 @@ const struct MemoryRegionOps tm4c123_wdt_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-static void tm4c123_wdt_init(Object *obj) {
+static void tm4c123_wdt_init(Object *obj)
+{
     TM4C123WatchdogState *s = TM4C123_WATCHDOG(obj);
 
     s->wdt_clock = qdev_init_clock_in(DEVICE(s), "wdt_clock", NULL, NULL, 0);
@@ -261,7 +265,8 @@ static void tm4c123_wdt_init(Object *obj) {
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
 }
 
-static void tm4c123_wdt_realize(DeviceState *dev, Error **errp) {
+static void tm4c123_wdt_realize(DeviceState *dev, Error **errp)
+{
     TM4C123WatchdogState *s = TM4C123_WATCHDOG(dev);
 
     s->timer = ptimer_init(tm4c123_wdt_expired, s,
