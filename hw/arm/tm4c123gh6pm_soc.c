@@ -54,8 +54,14 @@ static const uint32_t usart_addrs[USART_COUNT] =
     0x40013000
 };
 
+static const uint32_t wdt_addrs[WDT_COUNT] = {
+    0x40000000,
+    0x40001000
+};
+
 static const uint16_t usart_irqs[USART_COUNT] = {5, 6, 33, 59, 60, 61, 62, 63};
 static const uint16_t gpio_irqs[GPIO_COUNT] = {0, 1, 2, 3, 4, 30};
+static const uint16_t wdt_irqs[WDT_COUNT] = {18, 18};
 
 static void tm4c123gh6pm_soc_initfn(Object *obj)
 {
@@ -71,12 +77,16 @@ static void tm4c123gh6pm_soc_initfn(Object *obj)
 
     for(i = 0; i < GPIO_COUNT; i++) {
         object_initialize_child(obj, "gpio[*]", &s->gpio[i], TYPE_TM4C123_GPIO);
+    }
 
+    for(i = 0; i < WDT_COUNT; i++) {
+        object_initialize_child(obj, "watchdog-timer[*]", &s->wdt[i], TYPE_TM4C123_WATCHDOG);
     }
 
 
     s->sysclk = qdev_init_clock_in(DEVICE(s), "sysclk", NULL, NULL, 0);
     s->refclk = qdev_init_clock_in(DEVICE(s), "refclk", NULL, NULL, 0);
+    s->sysclkout = qdev_init_clock_out(DEVICE(s), "sysclkout");
 }
 
 static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
@@ -101,6 +111,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     clock_set_mul_div(s->refclk, 8, 1);
     clock_set_source(s->refclk, s->sysclk);
+    clock_set_source(s->sysclkout, s->sysclk);
 
     //init flash memory
     memory_region_init_rom(&s->flash, OBJECT(dev_soc), "TM4C123GH6PM.flash", FLASH_SIZE, &error_fatal);
@@ -116,8 +127,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     /* Init ARMv7m */
     armv7m = DEVICE(&s->armv7m);
-    //the number of the sys exceptions + irqs. 0 is not used.
-    qdev_prop_set_uint32(armv7m, "num-irq", 154);
+    qdev_prop_set_uint32(armv7m, "num-irq", 138);
     qdev_prop_set_string(armv7m, "cpu-type", s->cpu_type);
     qdev_prop_set_bit(armv7m, "enable-bitband", true);
     qdev_connect_clock_in(armv7m, "cpuclk", s->sysclk);
@@ -128,11 +138,6 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
     if(!sysbus_realize(SYS_BUS_DEVICE(&s->armv7m), errp)) {
         return;
     }
-
-    /*
-     * Init GPIO lines
-     */
-
 
     for(i = 0; i < USART_COUNT; i++) {
         dev = DEVICE(&(s->usart[i]));
@@ -157,6 +162,18 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
         sysbus_connect_irq(busdev, 0, qdev_get_gpio_in(armv7m, gpio_irqs[i]));
     }
 
+    for(i = 0; i < WDT_COUNT; i++) {
+        dev = DEVICE(&(s->wdt[i]));
+        qdev_connect_clock_in(dev, "wdt_clock", qdev_get_clock_out(dev_soc, "sysclkout"));
+        s->wdt[i].sysctl = &s->sysctl;
+        if(!sysbus_realize(SYS_BUS_DEVICE(&s->wdt[i]), errp)) {
+            return;
+        }
+        busdev = SYS_BUS_DEVICE(dev);
+        sysbus_mmio_map(busdev, 0, wdt_addrs[i]);
+        sysbus_connect_irq(busdev, 0, qdev_get_gpio_in(armv7m, wdt_irqs[i]));
+    }
+
     dev = DEVICE(&(s->sysctl));
     if(!sysbus_realize(SYS_BUS_DEVICE(&s->sysctl), errp)) {
         return;
@@ -165,8 +182,6 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
     busdev = SYS_BUS_DEVICE(dev);
     sysbus_mmio_map(busdev, 0, SYSCTL_ADDR);
 
-
-    create_unimplemented_device("watchdog[*]", 0x40000000, 0x1FFF);
 
     create_unimplemented_device("SSI_0", 0x40008000, 0xFFF);
     create_unimplemented_device("SSI_1", 0x40009000, 0xFFF);

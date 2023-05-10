@@ -588,6 +588,7 @@ config TM4C123GH6PM_SOC
     select TM4C123_USART
     select TM4C123_SYSCTL
     select TM4C123_GPIO
+    select TM4C123_WDT
 
 config TIVAC
     bool

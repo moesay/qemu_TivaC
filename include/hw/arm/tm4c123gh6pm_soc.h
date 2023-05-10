@@ -31,6 +31,7 @@
 #include "hw/char/tm4c123_usart.h"
 #include "hw/misc/tm4c123_sysctl.h"
 #include "hw/gpio/tm4c123_gpio.h"
+#include "hw/watchdog/tm4c123_watchdog.h"
 
 #define TYPE_TM4C123GH6PM_SOC "tm4c123gh6pm-soc"
 
@@ -46,8 +47,8 @@ OBJECT_DECLARE_SIMPLE_TYPE(TM4C123GH6PMState, TM4C123GH6PM_SOC)
 #define SYSCTL_ADDR 0x400FE000
 
 #define USART_COUNT 8
-
 #define GPIO_COUNT 6
+#define WDT_COUNT 2
 
 struct TM4C123GH6PMState {
     SysBusDevice parent_obj;
@@ -59,6 +60,7 @@ struct TM4C123GH6PMState {
     TM4C123USARTState usart[USART_COUNT];
     TM4C123SysCtlState sysctl;
     TM4C123GPIOState gpio[GPIO_COUNT];
+    TM4C123WatchdogState wdt[WDT_COUNT];
 
     MemoryRegion sram;
     MemoryRegion alias_region;
@@ -66,6 +68,7 @@ struct TM4C123GH6PMState {
 
     Clock *sysclk;
     Clock *refclk;
+    Clock *sysclkout;
 };
 
 #endif
