@@ -1,5 +1,9 @@
 # See docs/devel/tracing.rst for syntax documentation.
 
+# tm4c123_gpio.c
+tm4c123_gpio_read(uint64_t offset) " offset: 0x%" PRIx64
+tm4c123_gpio_write(uint64_t offset, uint64_t value) " offset: 0x%" PRIx64 " - value: 0x%" PRIx64
+
 # npcm7xx_gpio.c
 npcm7xx_gpio_read(const char *id, uint64_t offset, uint64_t value) " %s offset: 0x%04" PRIx64 " value 0x%08" PRIx64
 npcm7xx_gpio_write(const char *id, uint64_t offset, uint64_t value) "%s offset: 0x%04" PRIx64 " value 0x%08" PRIx64
