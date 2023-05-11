@@ -109,7 +109,6 @@ static uint64_t tm4c123_wdt_read(void *opaque, hwaddr addr, unsigned int size)
             return s->wdt_load;
         case WDT_VALUE:
             return ptimer_get_count(s->timer);
-            /* return s->wdt_value; */
         case WDT_CTL:
             return s->wdt_ctl;
         case WDT_ICR:
@@ -162,16 +161,11 @@ static void tm4c123_wdt_write(void *opaque, hwaddr addr, uint64_t val64, unsigne
         hw_error("Watchdog module clock is not enabled");
     }
 
-    /* if(locked) */
-    /*     if(val32 != UNLOCK_VALUE && (addr != WDT_LOCK || addr != WDT_ICR)) */
-    /*         return; */
-
     switch(addr) {
         case WDT_LOAD:
             s->wdt_load = val32;
             locked = true;
             s->wdt_ctl |= WDT_CTL_INTEN;
-            /* s->wdt_lock = 1; */
             ptimer_transaction_begin(s->timer);
             ptimer_set_count(s->timer, s->wdt_load);
             ptimer_set_limit(s->timer, s->wdt_load, 1);
@@ -202,6 +196,7 @@ static void tm4c123_wdt_write(void *opaque, hwaddr addr, uint64_t val64, unsigne
             s->wdt_test = val32;
             break;
         case WDT_LOCK:
+            /* The actual hardware never locks the module */
             if(val32 == UNLOCK_VALUE) {
                 locked = false;
                 s->wdt_lock = 0;
@@ -268,6 +263,7 @@ static void tm4c123_wdt_init(Object *obj)
 static void tm4c123_wdt_realize(DeviceState *dev, Error **errp)
 {
     TM4C123WatchdogState *s = TM4C123_WATCHDOG(dev);
+    qdev_connect_clock_in(dev, "wdt_clock", qdev_get_clock_out(DEVICE(s->sysctl), "outclk"));
 
     s->timer = ptimer_init(tm4c123_wdt_expired, s,
                            PTIMER_POLICY_NO_IMMEDIATE_RELOAD |

@@ -31,6 +31,123 @@
 #define LOG(fmt, args...) qemu_log("%s: " fmt, __func__, ## args)
 #define READONLY LOG("0x%"HWADDR_PRIx" is a readonly field\n.", addr)
 
+static void tm4c123_sysctl_update_system_clock(void *opaque)
+{
+    TM4C123SysCtlState *s = opaque;
+
+    uint32_t RCC_Val = s->sysctl_rcc;
+    uint32_t RCC2_Val = s->sysctl_rcc2;
+
+    uint32_t __CORE_CLK_PRE;
+    uint32_t __CORE_CLK;
+
+    if (RCC2_Val & (1UL << 31)) {  /* is rcc2 used? */
+        if (RCC2_Val & (1UL << 11)) {  /* check BYPASS */
+            if (((RCC2_Val >> 4) & 0x07) == 0x0) {
+                if (((RCC_Val >> 6) & 0x1F) == 0x0) {
+                    __CORE_CLK_PRE = 1000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x1) {
+                    __CORE_CLK_PRE = 1843200UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x2) {
+                    __CORE_CLK_PRE = 2000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x3) {
+                    __CORE_CLK_PRE = 2457600UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x4) {
+                    __CORE_CLK_PRE = 3579545UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x5) {
+                    __CORE_CLK_PRE = 3686400UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x6) {
+                    __CORE_CLK_PRE = 4000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x7) {
+                    __CORE_CLK_PRE = 4096000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x8) {
+                    __CORE_CLK_PRE = 4915200UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x9) {
+                    __CORE_CLK_PRE = 5000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0xA) {
+                    __CORE_CLK_PRE = 5120000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0xB) {
+                    __CORE_CLK_PRE = 6000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0xC) {
+                    __CORE_CLK_PRE = 6144000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0xD) {
+                    __CORE_CLK_PRE = 7372800UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0xE) {
+                    __CORE_CLK_PRE = 8000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0xF) {
+                    __CORE_CLK_PRE = 8192000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x10) {
+                    __CORE_CLK_PRE = 10000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x11) {
+                    __CORE_CLK_PRE = 12000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x12) {
+                    __CORE_CLK_PRE = 12288000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x13) {
+                    __CORE_CLK_PRE = 13560000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x14) {
+                    __CORE_CLK_PRE = 14318180UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x15) {
+                    __CORE_CLK_PRE = 16000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x16) {
+                    __CORE_CLK_PRE = 16384000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x17) {
+                    __CORE_CLK_PRE = 18000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x18) {
+                    __CORE_CLK_PRE = 20000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x19) {
+                    __CORE_CLK_PRE = 24000000UL;
+                } else if (((RCC_Val >> 6) & 0x1F) == 0x1A) {
+                    __CORE_CLK_PRE = 25000000UL;
+                } else {
+                    __CORE_CLK_PRE = 0UL;
+                }
+                __CORE_CLK = __CORE_CLK_PRE / 2UL;  /* divide by 2 since BYPASS is set */
+            } else {  /* PLL is used */
+                uint32_t __PLL_MULT = ((RCC2_Val >> 4) & 0x1F) + 2;
+                uint32_t __PLL_DIV = ((RCC2_Val >> 0) & 0x3F) + 1;
+                uint32_t __PLL_SOURCE = ((RCC2_Val >> 13) & 0x01);
+                if (__PLL_SOURCE == 0) {  /* source is XTAL */
+                    __CORE_CLK_PRE = (XTALI * __PLL_MULT) / __PLL_DIV;
+                } else {  /* source is internal oscillator */
+                    __CORE_CLK_PRE = (16000000UL * __PLL_MULT) / __PLL_DIV;  /* internal oscillator frequency is 16MHz */
+                }
+                __CORE_CLK = __CORE_CLK_PRE / 2UL;  /* divide by 2 since BYPASS is set */
+            }
+        } else {  /* BYPASS is not set */
+            uint32_t __SYS_DIV = ((RCC2_Val >> 22) & 0x7F) + 1;
+            uint32_t __PLL_MULT = ((RCC2_Val >> 4) & 0x1F) + 2;
+            uint32_t __PLL_DIV = ((RCC2_Val >> 0) & 0x3F) + 1;
+            uint32_t __PLL_SOURCE = ((RCC2_Val >> 13) & 0x01);
+            if (__PLL_SOURCE == 0) {  /* source is XTAL */
+                __CORE_CLK_PRE = (XTALI * __PLL_MULT) / __PLL_DIV;
+            } else {  /* source is internal oscillator */
+                __CORE_CLK_PRE = (16000000UL * __PLL_MULT) / __PLL_DIV;  /* internal oscillator frequency is 16MHz */
+            }
+            __CORE_CLK = __CORE_CLK_PRE / __SYS_DIV;
+        }
+    } else {  /* rcc2 is not used */
+        if (((RCC_Val >> 16) & 0x01) == 0x01) {  /* check USESYSCLK */
+            if (((RCC_Val >> 23) & 0x01) == 0x01) {  /* check BYPASS */
+                __CORE_CLK_PRE = XTALI;
+            } else {  /* PLL is used */
+                uint32_t __PLL_MULT = ((RCC_Val >> 18) & 0x1F) + 2;
+                uint32_t __PLL_DIV = ((RCC_Val >> 12) & 0x3F) + 1;
+                uint32_t __PLL_SOURCE = ((RCC_Val >> 16) & 0x01);
+                if (__PLL_SOURCE == 0) {  /* source is XTAL */
+                    __CORE_CLK_PRE = (XTALI * __PLL_MULT) / __PLL_DIV;
+                } else {  /* source is internal oscillator */
+                    __CORE_CLK_PRE = (16000000UL * __PLL_MULT) / __PLL_DIV;  /* internal oscillator frequency is 16MHz */
+                }
+            }
+        } else {  /* USESYSCLK bit is not set */
+            __CORE_CLK_PRE = 16000000UL;  /* default to internal oscillator frequency */
+        }
+        __CORE_CLK = __CORE_CLK_PRE / 1UL;  /* no division needed since BYPASS is not set */
+    }
+    trace_tm4c123_sysctl_update_system_clock(__CORE_CLK);
+    clock_update_hz(s->mainclk, __CORE_CLK);
+}
+
 static void tm4c123_sysctl_reset(DeviceState *dev)
 {
     TM4C123SysCtlState *s = TM4C123_SYSCTL(dev);
@@ -199,6 +316,7 @@ static void tm4c123_sysctl_write(void *opaque, hwaddr addr, uint64_t val64, unsi
             if(s->sysctl_rcc & SYSCTL_RCC_PWRDN && !(s->sysctl_rcc2 & SYSCTL_RCC2_USERCC2)) {
                 s->sysctl_ris |= SYSCTL_RIS_PLLRIS;
             }
+            tm4c123_sysctl_update_system_clock(s);
             break;
         case SYSCTL_GPIOHBCTL:
             s->sysctl_gpiohbctl = val32;
@@ -211,6 +329,7 @@ static void tm4c123_sysctl_write(void *opaque, hwaddr addr, uint64_t val64, unsi
             if(s->sysctl_rcc2 & SYSCTL_RCC2_USERCC2 && !(s->sysctl_rcc2 & SYSCTL_RCC2_PWRDN2)) {
                 s->sysctl_ris |= SYSCTL_RIS_PLLRIS;
             }
+            tm4c123_sysctl_update_system_clock(s);
             break;
         case SYSCTL_MOSCCTL:
             s->sysctl_moscctl = val32;
@@ -830,6 +949,11 @@ static const MemoryRegionOps tm4c123_sysctl_ops = {
 static void tm4c123_sysctl_init(Object *obj)
 {
     TM4C123SysCtlState *s = TM4C123_SYSCTL(obj);
+
+    s->mainclk = clock_new(OBJECT(s), "main-clk");
+    clock_set_hz(s->mainclk, 1000*1000);
+    s->outclk = qdev_init_clock_out(DEVICE(s), "outclk");
+    clock_set_source(s->outclk, s->mainclk);
 
     memory_region_init_io(&s->mmio, obj, &tm4c123_sysctl_ops, s, TYPE_TM4C123_SYSCTL, 0xFFF);
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);

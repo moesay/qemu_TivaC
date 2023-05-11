@@ -82,11 +82,6 @@ static void tm4c123gh6pm_soc_initfn(Object *obj)
     for(i = 0; i < WDT_COUNT; i++) {
         object_initialize_child(obj, "watchdog-timer[*]", &s->wdt[i], TYPE_TM4C123_WATCHDOG);
     }
-
-
-    s->sysclk = qdev_init_clock_in(DEVICE(s), "sysclk", NULL, NULL, 0);
-    s->refclk = qdev_init_clock_in(DEVICE(s), "refclk", NULL, NULL, 0);
-    s->sysclkout = qdev_init_clock_out(DEVICE(s), "sysclkout");
 }
 
 static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
@@ -99,20 +94,6 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     MemoryRegion *system_memory = get_system_memory();
 
-    if (clock_has_source(s->refclk)) {
-        error_setg(errp, "refclk clock must not be wired up by the board code");
-        return;
-    }
-
-    if (!clock_has_source(s->sysclk)) {
-        error_setg(errp, "sysclk clock must be wired up by the board code");
-        return;
-    }
-
-    clock_set_mul_div(s->refclk, 8, 1);
-    clock_set_source(s->refclk, s->sysclk);
-    clock_set_source(s->sysclkout, s->sysclk);
-
     //init flash memory
     memory_region_init_rom(&s->flash, OBJECT(dev_soc), "TM4C123GH6PM.flash", FLASH_SIZE, &error_fatal);
     memory_region_add_subregion(system_memory, FLASH_BASE_ADDRESS, &s->flash);
@@ -121,17 +102,13 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
     memory_region_init_ram(&s->sram, OBJECT(dev_soc), "TM4C123GH6PM.sram", SRAM_SIZE, &error_fatal);
     memory_region_add_subregion(system_memory, SRAM_BASE_ADDRESS, &s->sram);
 
-    /* //init alias region */
-    /* memory_region_init_alias(&s->alias_region, OBJECT(dev_soc), "TM4C123GH6PM.sram.alias", &s->sram, 0, ALIAS_REGION_SIZE); */
-    /* memory_region_add_subregion(system_memory, 0, &s->alias_region); */
-
     /* Init ARMv7m */
     armv7m = DEVICE(&s->armv7m);
     qdev_prop_set_uint32(armv7m, "num-irq", 138);
     qdev_prop_set_string(armv7m, "cpu-type", s->cpu_type);
     qdev_prop_set_bit(armv7m, "enable-bitband", true);
-    qdev_connect_clock_in(armv7m, "cpuclk", s->sysclk);
-    qdev_connect_clock_in(armv7m, "refclk", s->refclk);
+    qdev_connect_clock_in(armv7m, "cpuclk", s->sysctl.mainclk);
+    qdev_connect_clock_in(armv7m, "refclk", s->sysctl.mainclk);
     object_property_set_link(OBJECT(&s->armv7m), "memory",
                              OBJECT(get_system_memory()), &error_abort);
 
@@ -164,7 +141,6 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     for(i = 0; i < WDT_COUNT; i++) {
         dev = DEVICE(&(s->wdt[i]));
-        qdev_connect_clock_in(dev, "wdt_clock", qdev_get_clock_out(dev_soc, "sysclkout"));
         s->wdt[i].sysctl = &s->sysctl;
         if(!sysbus_realize(SYS_BUS_DEVICE(&s->wdt[i]), errp)) {
             return;
@@ -178,7 +154,6 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
     if(!sysbus_realize(SYS_BUS_DEVICE(&s->sysctl), errp)) {
         return;
     }
-
     busdev = SYS_BUS_DEVICE(dev);
     sysbus_mmio_map(busdev, 0, SYSCTL_ADDR);
 

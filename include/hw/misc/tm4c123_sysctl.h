@@ -28,6 +28,18 @@
 #include "qom/object.h"
 #include "hw/sysbus.h"
 #include "hw/hw.h"
+#include "hw/clock.h"
+#include "hw/qdev-clock.h"
+#include "qapi/error.h"
+
+#define XTALM       (16000000UL)            /* Main         oscillator freq */
+#define XTALI       (16000000UL)            /* Internal     oscillator freq */
+#define XTAL30K     (   30000UL)            /* Internal 30K oscillator freq */
+#define XTAL32K     (   32768UL)            /* external 32K oscillator freq */
+
+#define PLL_CLK    (400000000UL)
+#define ADC_CLK     (PLL_CLK/25)
+#define CAN_CLK     (PLL_CLK/50)
 
 #define SYSCTL_DID0 0x000
 #define SYSCTL_DID1 0x004
@@ -286,6 +298,9 @@ struct TM4C123SysCtlState {
     uint32_t sysctl_prqei;
     uint32_t sysctl_preeprom;
     uint32_t sysctl_prwtimer;
+
+    Clock* mainclk;
+    Clock* outclk;
 
 };
 

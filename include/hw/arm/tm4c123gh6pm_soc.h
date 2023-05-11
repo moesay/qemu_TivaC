@@ -41,8 +41,6 @@ OBJECT_DECLARE_SIMPLE_TYPE(TM4C123GH6PMState, TM4C123GH6PM_SOC)
 #define FLASH_SIZE (256 * 1024)
 #define SRAM_BASE_ADDRESS 0x20000000
 #define SRAM_SIZE (32 * 1024)
-#define ALIAS_REGION_BASE_ADDRESS 0x22000000
-#define ALIAS_REGION_SIZE 0xfffff
 
 #define SYSCTL_ADDR 0x400FE000
 
@@ -65,10 +63,6 @@ struct TM4C123GH6PMState {
     MemoryRegion sram;
     MemoryRegion alias_region;
     MemoryRegion flash;
-
-    Clock *sysclk;
-    Clock *refclk;
-    Clock *sysclkout;
 };
 
 #endif
