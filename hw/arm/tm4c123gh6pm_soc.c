@@ -59,9 +59,27 @@ static const uint32_t wdt_addrs[WDT_COUNT] = {
     0x40001000
 };
 
+static const uint32_t gptm_addrs[GPTM_COUNT] = {
+    0x40030000,
+    0x40031000,
+    0x40032000,
+    0x40033000,
+    0x40034000,
+    0x40035000,
+    0x40036000,
+    0x40037000,
+    0x4003C800,
+    0x4003D000,
+    0x4003E000,
+    0x4003F000,
+};
+
 static const uint16_t usart_irqs[USART_COUNT] = {5, 6, 33, 59, 60, 61, 62, 63};
 static const uint16_t gpio_irqs[GPIO_COUNT] = {0, 1, 2, 3, 4, 30};
 static const uint16_t wdt_irqs[WDT_COUNT] = {18, 18};
+static const uint16_t gptm_irqs[GPTM_COUNT * 2] =
+{19, 20, 21, 22, 23, 24, 35, 36, 70, 71, 92, 93,
+ 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105};
 
 static void tm4c123gh6pm_soc_initfn(Object *obj)
 {
@@ -81,6 +99,10 @@ static void tm4c123gh6pm_soc_initfn(Object *obj)
 
     for(i = 0; i < WDT_COUNT; i++) {
         object_initialize_child(obj, "watchdog-timer[*]", &s->wdt[i], TYPE_TM4C123_WATCHDOG);
+    }
+
+    for(i = 0; i < GPTM_COUNT; i++) {
+        object_initialize_child(obj, "gptm[*]", &s->gptm[i], TYPE_TM4C123_GPTM);
     }
 }
 
@@ -116,6 +138,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
         return;
     }
 
+    /* USART */
     for(i = 0; i < USART_COUNT; i++) {
         dev = DEVICE(&(s->usart[i]));
         s->usart[i].sysctl = &s->sysctl;
@@ -128,6 +151,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
         sysbus_connect_irq(busdev, 0, qdev_get_gpio_in(armv7m, usart_irqs[i]));
     }
 
+    /* GPIO */
     for(i = 0; i < GPIO_COUNT; i++) {
         dev = DEVICE(&(s->gpio[i]));
         s->gpio[i].sysctl = &s->sysctl;
@@ -139,6 +163,7 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
         sysbus_connect_irq(busdev, 0, qdev_get_gpio_in(armv7m, gpio_irqs[i]));
     }
 
+    /* Watchdog Timers */
     for(i = 0; i < WDT_COUNT; i++) {
         dev = DEVICE(&(s->wdt[i]));
         s->wdt[i].sysctl = &s->sysctl;
@@ -150,6 +175,21 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
         sysbus_connect_irq(busdev, 0, qdev_get_gpio_in(armv7m, wdt_irqs[i]));
     }
 
+    /* General purpose timers */
+    int j = 0;
+    for(i = 0, j = 0; i < GPTM_COUNT; i++, j+=2) {
+        dev = DEVICE(&(s->gptm[i]));
+        s->gptm[i].sysctl = &s->sysctl;
+        if(!sysbus_realize(SYS_BUS_DEVICE(&s->gptm[i]), errp)) {
+            return;
+        }
+        busdev = SYS_BUS_DEVICE(dev);
+        sysbus_mmio_map(busdev, 0, gptm_addrs[i]);
+        sysbus_connect_irq(busdev, 0, qdev_get_gpio_in(armv7m, gptm_irqs[j]));
+        sysbus_connect_irq(busdev, 1, qdev_get_gpio_in(armv7m, gptm_irqs[j+1]));
+    }
+
+    /* SYSCTL */
     dev = DEVICE(&(s->sysctl));
     if(!sysbus_realize(SYS_BUS_DEVICE(&s->sysctl), errp)) {
         return;
@@ -174,16 +214,6 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
     create_unimplemented_device("QEI_0", 0x4002C000, 0xFFF);
     create_unimplemented_device("QEI_1", 0x4002D000, 0xFFF);
 
-    create_unimplemented_device("16/32_TIMER_0", 0x40030000, 0xFFF);
-    create_unimplemented_device("16/32_TIMER_1", 0x40031000, 0xFFF);
-    create_unimplemented_device("16/32_TIMER_2", 0x40032000, 0xFFF);
-    create_unimplemented_device("16/32_TIMER_3", 0x40033000, 0xFFF);
-    create_unimplemented_device("16/32_TIMER_4", 0x40034000, 0xFFF);
-    create_unimplemented_device("16/32_TIMER_5", 0x40035000, 0xFFF);
-
-    create_unimplemented_device("32/64_TIMER_0", 0x40036000, 0xFFF);
-    create_unimplemented_device("32/64_TIMER_1", 0x40037000, 0xFFF);
-
     create_unimplemented_device("ADC_0", 0x40038000, 0xFFF);
     create_unimplemented_device("ADC_1", 0x40039000, 0xFFF);
 
@@ -191,11 +221,6 @@ static void tm4c123gh6pm_soc_realize(DeviceState *dev_soc, Error **errp)
 
     create_unimplemented_device("CAN_0", 0x40040000, 0xFFF);
     create_unimplemented_device("CAN_1", 0x40041000, 0xFFF);
-
-    create_unimplemented_device("32/64_TIMER_2", 0x4004C000, 0xFFF);
-    create_unimplemented_device("32/64_TIMER_3", 0x4004D000, 0xFFF);
-    create_unimplemented_device("32/64_TIMER_4", 0x4004E000, 0xFFF);
-    create_unimplemented_device("32/64_TIMER_5", 0x4004F000, 0xFFF);
 
     create_unimplemented_device("USB", 0x40050000, 0xFFF);
 

@@ -1,5 +1,10 @@
 # See docs/devel/tracing.rst for syntax documentation.
 
+# tm4c123_gptm.c
+tm4c123_gptm_read(uint32_t offset) "offset: 0x%"PRIx32
+tm4c123_gptm_write(uint32_t offset, uint32_t value) "offset: 0x%"PRIx32" - value: 0x%"PRIx32
+tm4c123_gptm_build_interval_value(uint32_t talir, uint32_t tblir, uint64_t result) "TALIR: 0x%"PRIx32" - TBLIR: 0x%"PRIx32" - value: 0x%"PRIx64
+
 # slavio_timer.c
 slavio_timer_get_out(uint64_t limit, uint32_t counthigh, uint32_t count) "limit 0x%"PRIx64" count 0x%x0x%08x"
 slavio_timer_irq(uint32_t counthigh, uint32_t count) "callback: count 0x%x0x%08x"

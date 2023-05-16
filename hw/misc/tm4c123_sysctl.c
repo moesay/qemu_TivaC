@@ -959,10 +959,18 @@ static void tm4c123_sysctl_init(Object *obj)
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
 }
 
+static void tm4c123_sysctl_realize(DeviceState *dev, Error **errp)
+{
+    TM4C123SysCtlState *s = TM4C123_SYSCTL(dev);
+    tm4c123_sysctl_update_system_clock(s);
+
+}
+
 static void tm4c123_sysctl_class_init(ObjectClass *kclass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(kclass);
     dc->reset = tm4c123_sysctl_reset;
+    dc->realize = tm4c123_sysctl_realize;
 }
 
 static const TypeInfo tm4c123_sysctl_info = {
