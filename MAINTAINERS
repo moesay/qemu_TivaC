@@ -1008,6 +1008,15 @@ F: include/hw/misc/zynq_slcr.h
 F: include/hw/adc/zynq-xadc.h
 X: hw/ssi/xilinx_*
 
+Tiva C
+M: Mohamed ElSayed <m.elsayed4420@gmail.com>
+L: qemu-arm@nongnu.org
+S: Maintained
+F: hw/*/tm4c123*
+F: include/hw/*/tm4c123*
+F: hw/arm/tivac.c
+F: docs/system/arm/tivac.rst
+
 Xilinx ZynqMP and Versal
 M: Alistair Francis <alistair@alistair23.me>
 M: Edgar E. Iglesias <edgar.iglesias@gmail.com>

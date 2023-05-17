@@ -581,3 +581,16 @@ config ARMSSE
     select UNIMP
     select SSE_COUNTER
     select SSE_TIMER
+
+config TM4C123GH6PM_SOC
+    bool
+    select ARM_V7M
+    select TM4C123_USART
+    select TM4C123_SYSCTL
+    select TM4C123_GPIO
+    select TM4C123_WDT
+    select TM4C123_GPTM
+
+config TIVAC
+    bool
+    select TM4C123GH6PM_SOC

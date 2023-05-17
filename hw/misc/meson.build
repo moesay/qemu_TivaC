@@ -141,3 +141,4 @@ softmmu_ss.add(when: 'CONFIG_SBSA_REF', if_true: files('sbsa_ec.c'))
 
 # HPPA devices
 softmmu_ss.add(when: 'CONFIG_LASI', if_true: files('lasi.c'))
+softmmu_ss.add(when: 'CONFIG_TM4C123_SYSCTL', if_true: files('tm4c123_sysctl.c'))
