@@ -1,5 +1,10 @@
 # See docs/devel/tracing.rst for syntax documentation.
 
+# tm4c123_sysctl.c
+tm4c123_sysctl_read(uint64_t offset) " offset: 0x%" PRIu64
+tm4c123_sysctl_write(uint64_t offset, uint64_t value) " offset: 0x%" PRIu64 " - value: 0x%"PRIu64
+tm4c123_sysctl_update_system_clock(uint32_t value) "New clock value = %"PRIu32" Hz"
+
 # allwinner-cpucfg.c
 allwinner_cpucfg_cpu_reset(uint8_t cpu_id, uint32_t reset_addr) "id %u, reset_addr 0x%" PRIx32
 allwinner_cpucfg_read(uint64_t offset, uint64_t data, unsigned size) "offset 0x%" PRIx64 " data 0x%" PRIx64 " size %" PRIu32
